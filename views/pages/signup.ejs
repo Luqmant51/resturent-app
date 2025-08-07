@@ -1,0 +1,59 @@
+<%- include('../partials/header') %>
+<!-- Hero Section with Form Overlay -->
+<div class="hero_area full-screen">
+  <div class="bg-box">
+    <img src="/images/hero-bg.jpg" alt="background">
+  </div>
+
+  <!-- Form Over Background -->
+  <div class="form-overlay">
+    <form id="register-form" class="hero-form">
+      <h2>Sign Up</h2>
+      <input type="text" name="user_name" placeholder="Full Name" required>
+      <input type="email" name="user_email" placeholder="Email" required>
+      <button type="submit">Sign Up</button>
+      <p>Already have an account? <a href="/login">Sign In</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- Footer -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("register-form");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      user_name: form.user_name.value.trim(),
+      user_email: form.user_email.value.trim(),
+    };
+
+    try {
+      const response = await fetch("/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(result.message); // ✅ Show alert: "User registered successfully."
+        window.location.href = "/login"; // ✅ Redirect after alert
+      } else {
+        alert(result.message || "Registration failed.");
+      }
+    } catch (err) {
+      console.error("Request error:", err);
+      alert("An error occurred. Try again.");
+    }
+  });
+});
+
+</script>
+
+<%- include('../partials/footer') %>
