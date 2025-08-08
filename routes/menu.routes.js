@@ -13,7 +13,8 @@ router.route("/create")
 
 router.route("/:id")
   .get(menuController.getMenuById)
-  .put(upload.single("menu_image"), menuController.updateMenu); // Add PUT route for updates
+  .put(upload.single("menu_image"), menuController.updateMenu)
+  .delete(menuController.deleteMenu); // <-- NEW
 
 router.route("/:id/edit")
   .get(menuController.getEditMenuPage); // Render edit form

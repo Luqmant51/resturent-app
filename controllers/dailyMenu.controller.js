@@ -7,9 +7,9 @@ function formatMenuRow(m) {
     menu_id: m.menu_id,
     menu_date: m.menu_date,
     food_name: m.food_name,
-    items: m.food_name ? m.food_name.split(",").map(i => i.trim()) : [],
+    items: m.food_name ? m.food_name.split(",").map((i) => i.trim()) : [],
     price: m.price ?? null,
-    image_path: m.image_path ?? null
+    image_path: m.image_path ?? null,
   };
 }
 
@@ -23,13 +23,13 @@ const getAllMenus = async (req, res) => {
       menu: null,
       menus,
       isLoggedIn: true,
-      isAdmin: true
+      isAdmin: true,
     });
   } catch (err) {
     console.error("Error fetching menus:", {
       message: err.message,
       stack: err.stack,
-      sql: err.sql || "N/A"
+      sql: err.sql || "N/A",
     });
     return res.status(500).send("Internal Server Error");
   }
@@ -49,13 +49,13 @@ const getEditMenuPage = async (req, res) => {
       menu: formatMenuRow(m),
       menus,
       isLoggedIn: true,
-      isAdmin: true
+      isAdmin: true,
     });
   } catch (err) {
     console.error("Error fetching menu for edit:", {
       message: err.message,
       stack: err.stack,
-      sql: err.sql || "N/A"
+      sql: err.sql || "N/A",
     });
     return res.status(500).send("Internal Server Error");
   }
@@ -66,7 +66,6 @@ const createMenu = async (req, res) => {
   try {
     const { menu_date, food_name, menu_price } = req.body;
 
-    // Validate price
     if (menu_price && (isNaN(menu_price) || menu_price < 0)) {
       return res.status(400).json({ success: false, error: "Invalid price" });
     }
@@ -74,14 +73,12 @@ const createMenu = async (req, res) => {
     await db.Menu.create({
       menu_date,
       food_name,
+      description: req.body.description || null,
       price: menu_price || null,
-      image_path: req.file ? `/uploads/menu/${req.file.filename}` : null
+      image_path: req.file ? `/uploads/menu/${req.file.filename}` : null,
     });
 
-    if (req.xhr || req.headers.accept?.includes("application/json")) {
-      return res.json({ success: true, message: "Menu created" });
-    }
-    return res.redirect("/daily-menu");
+    return res.json({ success: true, message: "Menu created" }); // Always JSON
   } catch (err) {
     console.error("Error creating menu:", err);
     return res.status(500).json({ success: false, error: "Internal Server Error" });
@@ -93,7 +90,8 @@ const updateMenu = async (req, res) => {
   try {
     const id = req.params.id;
     const menu = await db.Menu.findByPk(id);
-    if (!menu) return res.status(404).json({ success: false, error: "Menu not found" });
+    if (!menu)
+      return res.status(404).json({ success: false, error: "Menu not found" });
 
     const { menu_date, food_name, menu_price, remove_image } = req.body;
 
@@ -123,8 +121,9 @@ const updateMenu = async (req, res) => {
     await menu.update({
       menu_date,
       food_name,
+      description: req.body.description || null, // <-- Added
       price: menu_price || null,
-      image_path
+      image_path,
     });
 
     if (req.xhr || req.headers.accept?.includes("application/json")) {
@@ -133,7 +132,9 @@ const updateMenu = async (req, res) => {
     return res.redirect("/daily-menu");
   } catch (err) {
     console.error("Error updating menu:", err);
-    return res.status(500).json({ success: false, error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
   }
 };
 
@@ -149,10 +150,43 @@ const getMenuById = async (req, res) => {
   }
 };
 
+const deleteMenu = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const menu = await db.Menu.findByPk(id);
+    if (!menu) {
+      return res.status(404).json({ success: false, error: "Menu not found" });
+    }
+
+    // If there's an image, remove it from disk
+    if (menu.image_path) {
+      const fs = require("fs").promises;
+      const path = require("path");
+      try {
+        await fs.unlink(path.join(__dirname, "../public", menu.image_path));
+      } catch (err) {
+        console.error("Error deleting image:", err);
+      }
+    }
+
+    await menu.destroy();
+
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.json({ success: true, message: "Menu deleted" });
+    }
+
+    return res.redirect("/daily-menu");
+  } catch (err) {
+    console.error("Error deleting menu:", err);
+    return res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getAllMenus,
   getEditMenuPage,
   createMenu,
   updateMenu,
-  getMenuById
+  getMenuById,
+  deleteMenu
 };
