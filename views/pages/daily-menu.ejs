@@ -1,0 +1,224 @@
+<%- include('../partials/headeradmin') %>
+
+  <div class="hero_area">
+    <div class="container mt-5">
+      <h2>
+        <%= typeof menu !=='undefined' && menu ? "Edit Daily Menu" : "Create Daily Menu" %>
+      </h2>
+
+      <form id="menu-form" enctype="multipart/form-data" class="menu-form">
+        <div class="form-group">
+          <label for="menu_date">Menu Date</label>
+          <input type="date" name="menu_date" id="menu_date"
+            value="<%= typeof menu !== 'undefined' && menu && menu.menu_date ? 
+                        (menu.menu_date instanceof Date ? menu.menu_date.toISOString().split('T')[0] : menu.menu_date) : '' %>" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="food_name">Menu Items (comma separated)</label>
+          <input type="text" name="food_name" id="food_name"
+            value="<%= typeof menu !== 'undefined' && menu && menu.food_name ? menu.food_name : '' %>"
+            class="form-control" placeholder="e.g., Biryani, Salad, Juice" required>
+        </div>
+
+        <div class="form-group">
+  <label for="description">Description</label>
+  <textarea name="description" id="description" rows="3" 
+    class="form-control" placeholder="Write a short description about the menu..."><%= typeof menu !== 'undefined' && menu && menu.description ? menu.description : '' %></textarea>
+</div>
+
+
+        <div class="form-group">
+          <label for="menu_price">Price</label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">$</span>
+            </div>
+            <input type="number" step="0.01" name="menu_price" id="menu_price"
+              value="<%= typeof menu !== 'undefined' && menu && menu.price != null ? menu.price.toFixed(2) : '' %>"
+              class="form-control" placeholder="e.g., 12.50">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="menu_image">Menu Image</label>
+          <% if (typeof menu !=='undefined' && menu && menu.image_path) { %>
+            <div class="mb-2">
+              <img src="<%= menu.image_path %>" alt="Current Menu Image"
+                style="max-width: 200px; border: 1px solid #ccc; padding: 5px;">
+              <div>
+                <label>
+                  <input type="checkbox" name="remove_image" value="true"> Remove current image
+                </label>
+              </div>
+            </div>
+            <% } %>
+              <input type="file" name="menu_image" id="menu_image" class="form-control-file" accept="image/*">
+              <div id="image-preview" class="mt-2"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">
+          <%= typeof menu !=='undefined' && menu ? "Update Menu" : "Save Menu" %>
+        </button>
+      </form>
+    </div>
+
+    <hr>
+
+    <div class="container">
+      <h3>Today's Menu</h3>
+      <% if (menus && menus.length> 0) { %>
+        <% menus.forEach(menuItem=> { %>
+          <div class="card my-3">
+            <div class="card-body">
+              <h5 class="card-title">
+                <%= menuItem.menu_date instanceof Date ? menuItem.menu_date.toISOString().split('T')[0] :
+                  menuItem.menu_date %>
+                  <% if (isAdmin) { %>
+                    <a href="/daily-menu/<%= menuItem.menu_id %>/edit" class="btn btn-sm btn-warning ml-2">Edit</a>
+                    <% } %>
+              </h5>
+              <ul>
+                <% menuItem.items.forEach(item=> { %>
+                  <li>
+                    <%= item %>
+                  </li>
+                  <% }) %>
+              </ul>
+              <% if (menuItem.price !=null && !isNaN(menuItem.price)) { %>
+                <p class="card-text">
+                  Price: $<%= Number(menuItem.price).toFixed(2) %>
+                </p>
+                <% } %>
+
+            </div>
+          </div>
+          <% }) %>
+            <% } else { %>
+              <p>No menu set for today.</p>
+              <% } %>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('menu-form');
+        if (!form) return;
+
+        // Image preview
+        const imageInput = document.getElementById('menu_image');
+        const imagePreview = document.getElementById('image-preview');
+        imageInput.addEventListener('change', (e) => {
+          imagePreview.innerHTML = ''; // Clear previous preview
+          const file = e.target.files[0];
+          if (file) {
+            const preview = document.createElement('img');
+            preview.src = URL.createObjectURL(file);
+            preview.style.maxWidth = '200px';
+            preview.style.border = '1px solid #ccc';
+            preview.style.padding = '5px';
+            imagePreview.appendChild(preview);
+          }
+        });
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const submitBtn = form.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
+          submitBtn.textContent = typeof menu !== 'undefined' && menu ? 'Updating...' : 'Saving...';
+
+          // Client-side validation
+          const menuDate = form.querySelector('#menu_date').value;
+          const foodName = form.querySelector('#food_name').value;
+          const menuPrice = form.querySelector('#menu_price').value;
+
+          if (!menuDate) {
+            alert('Menu date is required');
+            submitBtn.disabled = false;
+            submitBtn.textContent = typeof menu !== 'undefined' && menu ? 'Update Menu' : 'Save Menu';
+            return;
+          }
+          if (!foodName) {
+            alert('Menu items are required');
+            submitBtn.disabled = false;
+            submitBtn.textContent = typeof menu !== 'undefined' && menu ? 'Update Menu' : 'Save Menu';
+            return;
+          }
+          if (menuPrice && (isNaN(menuPrice) || menuPrice < 0)) {
+            alert('Price must be a valid number');
+            submitBtn.disabled = false;
+            submitBtn.textContent = typeof menu !== 'undefined' && menu ? 'Update Menu' : 'Save Menu';
+            return;
+          }
+
+          try {
+            const fd = new FormData(form);
+            let url = '/menu';
+            let method = 'POST';
+
+            const isEditMode = typeof menu !== 'undefined' && menu && menu.menu_id;
+            if (isEditMode) {
+              const useMethodOverride = true; // Set to false if backend supports direct PUT
+              if (useMethodOverride) {
+                url = `/menu/${menu.menu_id}?_method=PUT`;
+                method = 'POST';
+              } else {
+                url = `/menu/${menu.menu_id}`;
+                method = 'PUT';
+              }
+            }
+
+            const res = await fetch(url, {
+              method,
+              body: fd,
+              credentials: 'same-origin'
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (res.ok && data.success) {
+              alert(data.message || (isEditMode ? 'Menu updated successfully!' : 'Menu created successfully!'));
+              window.location.href = '/menu';
+            } else {
+              alert(data.error || 'Failed to save menu.');
+            }
+          } catch (err) {
+            console.error('Request failed:', err);
+            alert('Network error. Check console for details.');
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = typeof menu !== 'undefined' && menu ? 'Update Menu' : 'Save Menu';
+          }
+        });
+      });
+    </script>
+
+    <style>
+      .menu-form {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-control,
+      .form-control-file {
+        border-radius: 4px;
+      }
+
+      .btn-primary {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+      }
+    </style>
+
+    <!-- footer section -->
+    <%- include('../partials/footer') %>

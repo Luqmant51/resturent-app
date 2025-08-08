@@ -18,6 +18,7 @@ db.Sequelize = Sequelize;
 db.conn = conn;
 
 db.User = require('./user.model')(conn, DataTypes);
+db.Menu = require('./menu.model')(conn, DataTypes);
 // db.Event = require('./event.model')(conn, DataTypes);
 // db.Booking = require('./booking.model')(conn, DataTypes);
 
