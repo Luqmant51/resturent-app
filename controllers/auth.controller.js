@@ -85,7 +85,7 @@ const getlogin = async (req, res) => {
             const mailOptions = {
                 from: config.email.user,
                 to: user_email,
-                subject: "Welcome to Travel App",
+                subject: "Welcome to Resturent App",
                 text: `Hi ${user_name},\n\nYour account has been created successfully.\nPlease log in using your email ${user_email} and your password is ${autoPassword}\n\nThank you!`,
             };
 

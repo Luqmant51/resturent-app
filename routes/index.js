@@ -8,6 +8,7 @@ const about = require("./about.routes");
 const booking = require("./booking.routes");
 const menu = require("./menu.routes");
 const userRoute = require("./user.routes");
+const order = require("./order.routes");
 
 const routes = [
   { path: "/", route: landing },
@@ -16,13 +17,11 @@ const routes = [
   { path: '/user', route: userRoute },
   { path: "/booking", route: booking },
   { path: "/menu", route: menu },
+  { path: "/orders", route: order },
 ];
 
 routes.forEach(({ path, route }) => {
-  console.log('path:', path);
-  console.log('route stack:', route.stack?.map(layer => layer.route?.path || layer.name));
-  
-  router.use(path, route);
+    router.use(path, route);
 });
 
 

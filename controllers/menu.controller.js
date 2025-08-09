@@ -5,17 +5,13 @@ const menu = async (req, res) => {
     const menusRaw = await db.Menu.findAll({ order: [["menu_date", "DESC"]] });
 
     const menus = menusRaw.map((m) => ({
+      id:m.menu_id,
       name: m.food_name,
       description: m.description || "",
       price: m.price || 0,
       image: m.image_path,
       category: "all",
     }));
-
-    console.log('menus');
-    console.log(menus);
-    console.log('menus');
-    
 
     res.render("pages/menu", { menus, isLoggedIn: true, isAdmin: true });
   } catch (err) {
