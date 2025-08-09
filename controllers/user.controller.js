@@ -17,10 +17,6 @@ const getalluser = async (req, res) => {
       }
 
       const users = await db.User.findAll();
-
-      console.log(users);
-      
-
       return res.render('pages/admin-users', {
         users,
         isLoggedIn,

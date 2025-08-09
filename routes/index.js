@@ -21,7 +21,10 @@ const routes = [
 ];
 
 routes.forEach(({ path, route }) => {
-    router.use(path, route);
+  console.log('path:', path);
+  console.log('route stack:', route.stack?.map(layer => layer.route?.path || layer.name));
+  
+  router.use(path, route);
 });
 
 
