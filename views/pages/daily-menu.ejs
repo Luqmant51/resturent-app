@@ -120,7 +120,7 @@
 
                 <% if (isAdmin) { %>
                   <td>
-                    <a href="/menu/<%= menuItem.menu_id %>/edit" class="btn btn-sm btn-warning mr-2">Edit</a>
+                    <a href="/menu/admin/<%= menuItem.menu_id %>/edit" class="btn btn-sm btn-warning mr-2">Edit</a>
 
                     <form class="delete-menu-form" data-menu-id="<%= menuItem.menu_id %>" style="display:inline;">
                       <button type="submit" class="btn btn-sm btn-danger">Delete</button>
@@ -198,10 +198,10 @@
             if (isEditMode) {
               const useMethodOverride = true; // Set to false if backend supports direct PUT
               if (useMethodOverride) {
-                url = `/menu/${menu.menu_id}?_method=PUT`;
+                url = `/menu/admin/${menu.menu_id}?_method=PUT`;
                 method = 'POST';
               } else {
-                url = `/menu/${menu.menu_id}`;
+                url = `/menu/admin/${menu.menu_id}`;
                 method = 'PUT';
               }
             }
@@ -236,7 +236,7 @@
             if (!confirm('Are you sure you want to delete this menu?')) return;
 
             try {
-              const res = await fetch(`/menu/${menuId}`, {
+              const res = await fetch(`/menu/admin/${menuId}`, {
                 method: 'DELETE',
                 credentials: 'same-origin',
                 headers: {

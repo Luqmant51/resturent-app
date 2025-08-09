@@ -1,22 +1,21 @@
 const express = require("express");
-const menuController = require("../controllers/dailyMenu.controller");
+const menuController = require("../controllers/menu.controller");
 const upload = require("../middlewares/upload"); // Your multer middleware
 
 const router = express.Router();
+router.get("/menus", menuController.menu);
 
-router.route("/")
+router.route("/admin")
   .get(menuController.getAllMenus)
   .post(upload.single("menu_image"), menuController.createMenu);
 
-router.route("/create")
-  .get(menuController.getAllMenus); // Render create form
-
-router.route("/:id")
+// similarly for edit/update/delete routes
+router.route("/admin/:id")
   .get(menuController.getMenuById)
   .put(upload.single("menu_image"), menuController.updateMenu)
-  .delete(menuController.deleteMenu); // <-- NEW
+  .delete(menuController.deleteMenu);
 
-router.route("/:id/edit")
-  .get(menuController.getEditMenuPage); // Render edit form
+router.route("/admin/:id/edit").get(menuController.getEditMenuPage);
+
 
 module.exports = router;
