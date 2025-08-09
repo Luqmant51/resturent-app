@@ -1,11 +1,28 @@
 const db = require("../models");
 
 const menu = async (req, res) => {
+  
+  let isLoggedIn = false;
+  let user = null;
+  let isAdmin = false;
+  const token = req.cookies.JWT;
+  
   try {
     const menusRaw = await db.Menu.findAll({ order: [["menu_date", "DESC"]] });
-
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        isLoggedIn = true;
+        user = await db.User.findByPk(decoded.user_id);
+        if (decoded.is_admin) {
+          isAdmin = true;
+        }
+      } catch (err) {
+        console.log("Invalid or expired token:", err.message);
+      }
+    }
     const menus = menusRaw.map((m) => ({
-      id:m.menu_id,
+      id: m.menu_id,
       name: m.food_name,
       description: m.description || "",
       price: m.price || 0,
@@ -13,7 +30,7 @@ const menu = async (req, res) => {
       category: "all",
     }));
 
-    res.render("pages/menu", { menus, isLoggedIn: true, isAdmin: true });
+    res.render("pages/menu", { menus, isLoggedIn, isAdmin });
   } catch (err) {
     console.error("Failed to load menus:", err);
     res.status(500).send("Internal Server Error");
